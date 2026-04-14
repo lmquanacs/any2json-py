@@ -1,0 +1,23 @@
+{
+  "invoice_number": "The invoice number or reference ID",
+  "invoice_date": "The date the invoice was issued",
+  "due_date": "The payment due date",
+  "vendor_name": "The name of the company or person issuing the invoice",
+  "vendor_address": "The full address of the vendor",
+  "client_name": "The name of the client or customer being billed",
+  "client_address": "The full address of the client",
+  "line_items": {
+    "description": "List of all line items on the invoice",
+    "type": "array",
+    "fields": {
+      "description": "Product or service name",
+      "quantity": "Quantity ordered",
+      "unit_price": "Price per unit excluding tax",
+      "tax": "Tax amount for this line item",
+      "total": "Line total including tax"
+    }
+  },
+  "subtotal": "The subtotal amount before tax",
+  "tax": "The total tax amount",
+  "total": "The total amount due including tax"
+}
