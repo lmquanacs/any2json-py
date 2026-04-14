@@ -1,0 +1,5 @@
+{
+  "job": "The job title or position name",
+  "title": "The full job title including seniority level, e.g. Senior Software Engineer",
+  "company": "The name of the hiring company"
+}

@@ -1,0 +1,65 @@
+Position Title Department
+AI Engineer Innovation
+
+Reports to (Title) Location Role type Direct reports
+Head of Innovation Brisbane Fulltime 0
+About us
+
+We are proudly owned by Auto & General Insurance Company. The A&G group is made up of trusted and well-
+known brands such as iSelect, Compare the Market and Budget Direct. In late 2024, iSelect and Compare the Market
+
+formed a new Aggregation business within the A&G group and now support millions of Australians to compare and
+buy their personal finance and household products such as insurance, energy, and loans.
+iSelect
+At iSelect, we’re passionate about making Australians’ lives easier by saving them time, money, and effort. With over
+20 years’ experience, we are a one-stop destination for comparison and purchasing across insurance, utilities, and
+personal finance products. We compare a wide range of brands and our trained comparison experts help customers
+to compare, select and save more, putting them in control.
+Compare the Market
+At CTM, our Noble Purpose is to make a difference in the lives of Australians by simplifying the process of making
+sound financial decisions. This Noble Purpose is our cultural ‘north star’ guiding our direction, prioritisation and
+decision making.
+As part of our Aggregation business, we've unified our IT teams across iSelect and Compare the Market, creating one
+collaborative powerhouse to drive innovation and efficiency.
+Purpose of the Role
+As an AI Engineer, you will provide technical leadership and expertise, driving the design, development, and delivery
+of innovative AI solutions for the Aggregation business.
+You will ensure technical excellence through modern AI development practices, data driven thinking, strategic
+technology use, and alignment with business goals. This role actively contributes to architectural decisions, promotes
+best practices, and supports a culture of continuous innovation with the business.
+Key Accountabilities
+Own AI feature delivery: work from discovery to production; define technical approaches, identify clear entry and
+exit points, and assist with rollout plans for new AI capabilities.
+Build with AI: design prompts; orchestrate LLMs; implement retrieval augmented generation and memory; integrate
+with model context protocol; ensure observability; support evaluations; build a repeatable AI delivery lifecycle.
+Lay a solid foundation: influence key decisions on the future of AI in the Aggregation Business; establish AI
+engineering standards (prompt patterns, guardrails, observability, evaluation, cost optimisation); DevOps for AI
+artefacts; document decisions and trade-offs; ensure alignment with company AI policies
+Mentor and multiply: coach engineers on AI and productionising AI solutions.
+Partner with product, data and engineering teams: translate customer needs into measurable AI outcomes;
+instrument usage, quality, reliability; iterate based on data.
+
+Position Description
+
+Technical qualifications and experience
+• 5+ years of experience in full-stack environments.
+• Hands-on experience taking AI features to production under real world constraints: scale, latency, cost and
+regulatory risk.
+• Demonstrated expertise in system design and integration, including foundation model selection, agentic
+framework choice, multi-modal input handling (structured data, text, and speech), RAG pipelines (chunking,
+embeddings, vector stores), and MCP.
+• Proficiency in Python essential. Proficiency in other languages (Typescript/JavaScript, C#, Java, SQL)
+desirable
+• Experience with AWS Cloud (including Bedrock), Databricks, Kubernetes, serverless, event-driven
+architectures.
+• Proficient in modern DevOps practices, observability, and end-to-end software development essential.
+• Curiosity and willingness to adapt in a fast-moving field essential
+Our Values
+
+Drive. We are focused, accountable, and committed to doing great work that
+makes a real impact. We keep pushing forward - always looking for ways to
+improve and grow.
+Noble Intent. We do what's right for our customers, our business, and each
+other. We lead with integrity and act on evidence.
+All Together. We bring our best energy and enjoy the ride. We include everyone
+and celebrate our shared success.
