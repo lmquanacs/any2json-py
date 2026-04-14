@@ -7,7 +7,7 @@ from any2json_py.utils.cost_tracker import CostTracker
 from any2json_py.utils.file_helpers import validate_file
 from any2json_py.utils.chunker import chunk_text, count_tokens
 from any2json_py.utils.logger import info
-from any2json_py.parsers.ai_parsers import AIParser, _extract_text, _is_image
+from any2json_py.parsers.content import extract_text, extract_image, is_image
 from any2json_py.agents.worker import run_worker
 from any2json_py.agents.coordinator import run_coordinator
 
@@ -21,13 +21,16 @@ def extract(
     validate_file(path)
     settings = get_settings()
 
-    if _is_image(path):
+    # Image — single worker with vision content
+    if is_image(path):
         info(f"Vision extraction via {settings.models.image}")
         if dry_run:
             return {"dry_run": True, "chunks": 1, "estimated_prompt_tokens": "N/A (image)", "estimated_cost_usd": "N/A"}
-        return AIParser().parse(path, model, tracker)
+        content = extract_image(path)
+        return asyncio.run(run_worker(content, model, tracker, llm_model=settings.models.image))
 
-    text = _extract_text(path)
+    # Text-based — extract content then route by token count
+    text = extract_text(path)
     token_count = count_tokens(text)
     info(f"Document tokens: {token_count:,}")
 
@@ -42,11 +45,14 @@ def extract(
         }
 
     if token_count <= settings.context_threshold_tokens:
-        info(f"Single-pass text extraction")
-        return AIParser().parse(path, model, tracker)
+        # Single worker — full document fits in context
+        info(f"Single worker via {settings.models.text}")
+        return asyncio.run(run_worker(text, model, tracker, llm_model=settings.models.text))
 
-    info(f"Multi-agent flow: chunking into ~{settings.chunk_size_tokens}-token pieces")
+    # Multi-agent — chunk and run workers in parallel, then coordinate
+    info(f"Multi-agent flow via {settings.models.worker} workers + {settings.models.coordinator} coordinator")
     chunks = chunk_text(text)
+    info(f"Split into {len(chunks)} chunks")
     partials = asyncio.run(_run_workers(chunks, model, tracker))
     return run_coordinator(partials, model, tracker)
 

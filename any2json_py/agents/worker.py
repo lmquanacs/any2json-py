@@ -7,21 +7,34 @@ from any2json_py.config import get_settings
 from any2json_py.utils.cost_tracker import CostTracker
 
 _SYSTEM_PROMPT = (
-    "You are a data extraction worker. Extract only information explicitly present in the provided chunk. "
-    "Never infer or hallucinate. Use null for any field not found in this chunk."
+    "You are a precise data extraction assistant. "
+    "Extract only information explicitly present in the provided content. "
+    "Never infer or hallucinate. Use null for any field not found in the content."
 )
 
 
-async def run_worker(chunk: str, model: type[BaseModel], tracker: CostTracker) -> BaseModel:
+async def run_worker(
+    content: str | list,
+    model: type[BaseModel],
+    tracker: CostTracker,
+    llm_model: str | None = None,
+) -> BaseModel:
+    """Single unit of LLM execution. Accepts text (str) or image (list of vision message parts)."""
     settings = get_settings()
-    llm_model = settings.models.worker
+    llm_model = llm_model or settings.models.worker
     client = instructor.from_litellm(completion)
+
+    if isinstance(content, str):
+        user_content = f"Extract data from the following content:\n\n{content}"
+    else:
+        user_content = content  # vision message list
+
     response, comp = await asyncio.to_thread(
         client.chat.completions.create_with_completion,
         model=llm_model,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": f"Extract data from this document chunk:\n\n{chunk}"},
+            {"role": "user", "content": user_content},
         ],
         response_model=model,
         temperature=0,
