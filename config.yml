@@ -1,0 +1,11 @@
+models:
+  text: openai/gpt-4o-mini        # single-pass text extraction
+  image: openai/gpt-4o            # vision extraction (requires strong vision model)
+  worker: openai/gpt-4o-mini      # chunk extraction in multi-agent flow
+  coordinator: openai/gpt-4o      # merging and validating worker outputs
+
+limits:
+  max_file_size_mb: 50
+  context_threshold_tokens: 100000
+  chunk_size_tokens: 8000
+  chunk_overlap_tokens: 200

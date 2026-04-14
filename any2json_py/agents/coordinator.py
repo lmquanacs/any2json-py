@@ -16,10 +16,11 @@ _SYSTEM_PROMPT = (
 
 def run_coordinator(partials: list[BaseModel], model: type[BaseModel], tracker: CostTracker) -> BaseModel:
     settings = get_settings()
+    llm_model = settings.models.coordinator
     client = instructor.from_litellm(completion)
     partial_jsons = json.dumps([p.model_dump() for p in partials], indent=2)
     response, comp = client.chat.completions.create_with_completion(
-        model=settings.coordinator_model,
+        model=llm_model,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": f"Merge these partial extractions:\n\n{partial_jsons}"},
@@ -27,5 +28,5 @@ def run_coordinator(partials: list[BaseModel], model: type[BaseModel], tracker: 
         response_model=model,
         temperature=0,
     )
-    tracker.add(settings.coordinator_model, comp.usage.prompt_tokens, comp.usage.completion_tokens)
+    tracker.add(llm_model, comp.usage.prompt_tokens, comp.usage.completion_tokens)
     return response

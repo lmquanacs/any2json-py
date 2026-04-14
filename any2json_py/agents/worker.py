@@ -14,10 +14,11 @@ _SYSTEM_PROMPT = (
 
 async def run_worker(chunk: str, model: type[BaseModel], tracker: CostTracker) -> BaseModel:
     settings = get_settings()
+    llm_model = settings.models.worker
     client = instructor.from_litellm(completion)
     response, comp = await asyncio.to_thread(
         client.chat.completions.create_with_completion,
-        model=settings.worker_model,
+        model=llm_model,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": f"Extract data from this document chunk:\n\n{chunk}"},
@@ -25,5 +26,5 @@ async def run_worker(chunk: str, model: type[BaseModel], tracker: CostTracker) -
         response_model=model,
         temperature=0,
     )
-    tracker.add(settings.worker_model, comp.usage.prompt_tokens, comp.usage.completion_tokens)
+    tracker.add(llm_model, comp.usage.prompt_tokens, comp.usage.completion_tokens)
     return response

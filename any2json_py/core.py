@@ -22,7 +22,7 @@ def extract(
     settings = get_settings()
 
     if _is_image(path):
-        info(f"Vision extraction via {settings.worker_model}")
+        info(f"Vision extraction via {settings.models.image}")
         if dry_run:
             return {"dry_run": True, "chunks": 1, "estimated_prompt_tokens": "N/A (image)", "estimated_cost_usd": "N/A"}
         return AIParser().parse(path, model, tracker)
@@ -42,7 +42,7 @@ def extract(
         }
 
     if token_count <= settings.context_threshold_tokens:
-        info("Single-pass AI extraction")
+        info(f"Single-pass text extraction")
         return AIParser().parse(path, model, tracker)
 
     info(f"Multi-agent flow: chunking into ~{settings.chunk_size_tokens}-token pieces")

@@ -55,14 +55,17 @@ class AIParser(BaseParser):
     def parse(self, path: Path, model: type[BaseModel], tracker: CostTracker) -> BaseModel:
         settings = get_settings()
         client = instructor.from_litellm(completion)
-        info(f"Single-pass AI extraction via {settings.worker_model}")
         if _is_image(path):
+            llm_model = settings.models.image
             user_content = _image_message(path)
+            info(f"Vision extraction via {llm_model}")
         else:
+            llm_model = settings.models.text
             text = _extract_text(path)
             user_content = f"Extract data from the following document:\n\n{text}"
+            info(f"Single-pass text extraction via {llm_model}")
         response, comp = client.chat.completions.create_with_completion(
-            model=settings.worker_model,
+            model=llm_model,
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": user_content},
@@ -70,5 +73,5 @@ class AIParser(BaseParser):
             response_model=model,
             temperature=0,
         )
-        tracker.add(settings.worker_model, comp.usage.prompt_tokens, comp.usage.completion_tokens)
+        tracker.add(llm_model, comp.usage.prompt_tokens, comp.usage.completion_tokens)
         return response
