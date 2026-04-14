@@ -52,7 +52,9 @@ any2json-py report.pdf --schema schema.json --exact-quotes --verbose > output.js
 
 ### Schema format
 
-A schema is a JSON file mapping field names to descriptions:
+A schema is a JSON file mapping field names to descriptions. All fields are optional by default — the LLM returns `null` if the information is not found in the document.
+
+**Simple fields:**
 
 ```json
 {
@@ -62,7 +64,27 @@ A schema is a JSON file mapping field names to descriptions:
 }
 ```
 
-Field descriptions guide the LLM — be explicit to avoid null returns.
+**Array fields** — for repeated items like line items, participants, or skills:
+
+```json
+{
+  "invoice_number": "The invoice number",
+  "line_items": {
+    "description": "List of all line items on the invoice",
+    "type": "array",
+    "fields": {
+      "description": "Product or service name",
+      "quantity": "Quantity ordered",
+      "unit_price": "Price per unit excluding tax",
+      "tax": "Tax amount for this line item",
+      "total": "Line total including tax"
+    }
+  },
+  "total": "The total amount due including tax"
+}
+```
+
+Be explicit in field descriptions — prefer `"The full job title including seniority level"` over `"The title"` to avoid null returns.
 
 ### Python library
 
@@ -70,13 +92,27 @@ Field descriptions guide the LLM — be explicit to avoid null returns.
 from pathlib import Path
 from any2json_py import extract, build_model, CostTracker
 
+# Simple fields
 model = build_model({
     "job": "The job title",
     "company": "The hiring company"
 })
 
+# With array fields
+model = build_model({
+    "invoice_number": "The invoice number",
+    "line_items": {
+        "description": "List of all line items",
+        "type": "array",
+        "fields": {
+            "description": "Product name",
+            "total": "Line total"
+        }
+    }
+})
+
 tracker = CostTracker()
-result = extract(Path("report.pdf"), model, tracker)
+result = extract(Path("invoice.pdf"), model, tracker)
 
 print(result.model_dump())
 print(tracker.summary())
