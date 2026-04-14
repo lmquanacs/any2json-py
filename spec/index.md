@@ -28,28 +28,28 @@ any2json-py/
 ├── .env.example              # Example environment variables (API keys)
 ├── .gitignore                # Git ignore rules
 ├── venv/                     # Python virtual environment (never committed)
+├── config.yml                # Model and limits configuration
 ├── README.md                 # Project documentation
 ├── pyproject.toml            # Dependencies and package metadata
 ├── any2json_py/              # Main application package
 │   ├── __init__.py           # Exposes main library functions
-│   ├── cli.py                # CLI interface commands (Typer/Click)
-│   ├── core.py               # The Orchestrator: routes files to parsers
-│   ├── config.py             # Configuration management (Model selection, limits)
+│   ├── cli.py                # CLI interface commands (Typer)
+│   ├── core.py               # Orchestrator: content extraction + agent routing
+│   ├── config.py             # Loads config.yml, exposes Settings
 │   ├── exceptions.py         # Custom error handling
 │   ├── schema.py             # Dynamic Pydantic schema generation logic
-│   ├── agents/               # Multi-Agent Orchestration
+│   ├── agents/               # All LLM interaction
 │   │   ├── __init__.py
 │   │   ├── coordinator.py    # Merges worker outputs and enforces final schema
-│   │   └── worker.py         # Extracts data from specific document chunks
-│   ├── parsers/              # Sub-package for all parsing strategies
+│   │   └── worker.py         # Single unit of LLM execution (text + vision)
+│   ├── parsers/              # Content extraction only (no LLM)
 │   │   ├── __init__.py
-│   │   ├── base.py           # Abstract Base Class for parsers
-│   │   ├── local_parsers.py  # CSV, YAML, XML logic
-│   │   └── ai_parsers.py    # Instructor + LLM logic for unstructured files
+│   │   ├── base.py           # Abstract Base Class
+│   │   └── content.py        # Extracts text/image from any file format
 │   └── utils/
-│       ├── file_helpers.py   # File type detection, MIME types, Size limits
-│       ├── chunker.py        # Semantic text/PDF chunking logic
-│       ├── cost_tracker.py   # Token counting and cost estimation logic
+│       ├── file_helpers.py   # File type detection, size limits
+│       ├── chunker.py        # Token counting and text chunking
+│       ├── cost_tracker.py   # Token and cost aggregation
 │       └── logger.py         # Standardized console logging
 └── tests/                    # Pytest directory
     ├── test_cli.py
@@ -62,15 +62,35 @@ any2json-py/
 1. **Input & Validation Stage:** User provides a file and schema. file_helpers.py checks the file size against the configured limit.
 2. **Dry-Run Check:** If --dry-run is enabled, cost_tracker.py uses tiktoken to estimate the number of chunks and total prompt tokens, printing an estimated cost report and exiting early.
 3. **Dynamic Modeling:** The schema.py module converts the user's query into a strict Pydantic model.
-4. **Router & Chunker (core.py):**
-   * *If structured (e.g., CSV):* Routes directly to local_parsers.py.
-   * *If unstructured (e.g., PDF/Text) and SMALL:* Routes to a standard single-pass ai_parsers.py.
-   * *If unstructured and LARGE (Exceeds Context Threshold):* Triggers the **Multi-Agent Flow**.
-5. **Multi-Agent Flow (Large Files):**
+4. **Content Extraction (core.py):**
+   * *If image:* Encoded as base64 and passed directly to the agent as a vision message.
+   * *If any other format:* Raw text is extracted (PDF via pymupdf, DOCX via python-docx, all others read as plain text) and token count is measured.
+5. **Unified Agent Flow (core.py):**
+   * The system always runs through the agent pipeline — there is no separate single-pass parser.
+   * *If tokens <= context threshold (small doc):* A single worker agent processes the full content. No coordinator needed.
+   * *If tokens > context threshold (large doc):* chunker.py splits the content into overlapping chunks. N worker agents run in parallel via asyncio. The coordinator agent merges all partial outputs into a final validated result.
+6. **Multi-Agent Flow (Large Files):**
    * **Chunking:** chunker.py splits the document into overlapping semantic chunks.
-   * **Workers:** The worker.py agent processes each chunk. As each worker finishes, it reports its token usage to the cost_tracker.py singleton.
-   * **Coordinator:** The coordinator.py agent receives partial JSONs, merges them, and logs its own token usage to the tracker.
-6. **Output Stage:** The parser returns the validated Pydantic model *along with* the aggregated usage metadata, which cli.py dumps to standard output.
+   * **Workers:** Each worker.py agent processes one chunk and reports token usage to cost_tracker.py.
+   * **Coordinator:** coordinator.py merges partial JSONs and logs its own token usage.
+7. **Output Stage:** The agent returns the validated Pydantic model *along with* the aggregated usage metadata, which cli.py dumps to standard output.
+
+## 4a. Unified Agent Design
+
+The key architectural principle is that `worker.py` is the single unit of execution for all LLM calls — both single-doc and multi-chunk flows use the same agent.
+
+```
+small doc (1 chunk)   →  [worker]                     →  result
+large doc (N chunks)  →  [worker] [worker] ... [worker]  →  coordinator  →  result
+image                 →  [worker with vision message]  →  result
+```
+
+`AIParser` is removed. The `parsers/` sub-package is responsible only for content extraction (text/binary → string or image bytes). All LLM interaction goes through `agents/worker.py`.
+
+**Benefits:**
+- Single code path for all LLM calls — easier to maintain, test, and debug
+- Consistent prompt, temperature, and error handling across all cases
+- Multi-agent flow works out of the box with 1 worker (no special casing)
 
 ## 5. Hallucination Mitigation Strategy (CRITICAL)
 

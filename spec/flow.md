@@ -6,31 +6,35 @@ flowchart TD
     B --> C[core.py\nvalidate_file]
     C --> D{File type?}
 
-    D -->|image\n.png .jpg| E[ai_parsers.py\nvision base64]
-    D -->|text-based\n.csv .yaml .xml .pdf .txt .docx| F[ai_parsers.py\nextract as plain text]
+    D -->|image\n.png .jpg| E[parsers/content.py\nbase64 encode]
+    D -->|text-based\n.csv .yaml .xml .pdf .txt .docx| F[parsers/content.py\nextract as plain text]
 
     F --> G[chunker.py\ncount_tokens]
     G --> H{tokens >\nthreshold?}
-    H -->|No\nsingle-pass| E
-    H -->|Yes\nmulti-agent| I[chunker.py\nsplit into chunks]
 
-    I --> J[worker.py × N\nparallel asyncio]
-    J -->|partial JSONs| K[coordinator.py\nmerge + validate]
+    H -->|No\n1 chunk| I[worker.py × 1]
+    H -->|Yes\nN chunks| J[chunker.py\nsplit into chunks]
+    E --> I
 
-    E --> L[cost_tracker.py\nrecord usage]
-    K --> L
+    J --> K[worker.py × N\nparallel asyncio]
+    K -->|partial JSONs| L[coordinator.py\nmerge + validate]
 
-    L --> M([JSON output\n+ usage metadata])
+    I --> M[cost_tracker.py\nrecord usage]
+    L --> M
+
+    M --> N([JSON output\n+ usage metadata])
 ```
 
 ## Key Decision Points
 
-| Condition | Path |
+| Condition | Agent flow |
 |---|---|
-| `.png` / `.jpg` | Vision API, base64 encoded |
-| any text-based format ≤ threshold | Single-pass AI extraction |
-| any text-based format > threshold | Multi-agent: workers → coordinator |
+| image | 1 worker (vision message) |
+| text-based ≤ threshold | 1 worker (full content) |
+| text-based > threshold | N workers in parallel → coordinator |
+
+The worker is the single unit of LLM execution in all cases. The coordinator is only invoked when there are multiple workers.
 
 ## Token Threshold
 
-Default: `CONTEXT_THRESHOLD_TOKENS=100000`. Override in `.env` to force multi-agent flow for testing.
+Default: `context_threshold_tokens: 100000` in `config.yml`. Lower it to force multi-agent flow for testing.
